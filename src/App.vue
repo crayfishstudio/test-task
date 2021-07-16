@@ -22,7 +22,7 @@
         </v-card-title>
         <v-data-table
           :headers="headers"
-          :items="packages"
+          :items="allPackages"
           :search="search"
         >
         <template v-slot:item="row">
@@ -62,7 +62,7 @@
           </div>
           <div class="mb-6">
             <h3>Links:</h3>
-            <v-list-item class="px-0 mb-n3" v-for="(value, name) in dialogData.links" :key="value">
+            <v-list-item class="px-0 mb-n3" v-for="(value, name) in dialogData.links" :key="name">
               <v-list-item-content>
                 <v-list-item-title>{{ name }}</v-list-item-title>
                 <v-list-item-subtitle>
@@ -71,9 +71,9 @@
               </v-list-item-content>
             </v-list-item>
           </div>
-          <div>
+          <div v-if="dialogData.author">
             <h3>About author:</h3>
-            <v-list-item class="px-0 mb-n3" v-for="(value, name) in dialogData.author" :key="value">
+            <v-list-item class="px-0 mb-n3" v-for="(value, name) in dialogData.author" :key="name">
               <v-list-item-content>
                 <v-list-item-subtitle>{{ name }}</v-list-item-subtitle>
                 <v-list-item-title>{{ value }}</v-list-item-title>
@@ -109,22 +109,13 @@
 </template>
 
 <script>
-import Vue from 'vue'
-import axios from 'axios'
-import VueAxios from 'vue-axios'
-
-Vue.use(VueAxios, axios)
+import {mapActions, mapGetters} from 'vuex'
 
 export default {
   name: 'App',
-
-  components: {
-  },
-
   data () {
     return {
       search: '',
-      packages: [],
       dialog: false,
       dialogData: [],
       headers: [
@@ -158,24 +149,19 @@ export default {
       ],
     }
   },
+  computed: mapGetters(['allPackages']),
   methods: {
-    searchPackages() {
-      this.axios
-      .get('https://registry.npmjs.org/-/v1/search?size=100&text=' + this.search)
-      .then(response => (
-        this.packages = response.data.objects
-      ));
-    },
+    ...mapActions(['searchPackages']),
     setDialogData(item) {
       this.dialogData = item.package;
     },
     shortDesc(desc, length) {
-      return desc.length > length ? desc.substring(0, length) + "..." : desc;
+      if (desc) return desc.length > length ? desc.substring(0, length) + "..." : desc;
     }
   },
   watch: {
     search() {
-      this.searchPackages();
+      this.searchPackages(this.search);
     }
   }
 };
